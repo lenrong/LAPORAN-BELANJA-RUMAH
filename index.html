@@ -3,204 +3,1015 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data cermat-cloud</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Laporan Belanja Rumah Airahcomp • Airahcomp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
+        /* Tema pink elegan modern (dari template kedua, disempurnakan) */
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
         }
-        h2 {
-            text-align: center;
-            margin-top: 20px;
+        body {
+            background: linear-gradient(145deg, #fff5f7 0%, #ffe4e9 100%);
+            color: #4a4a4a;
+            padding: 20px;
+            min-height: 100vh;
         }
-        label {
-            margin-left: 20px;
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
         }
-        select, button {
-            padding: 8px;
-            margin: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            cursor: pointer;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+        header {
+            background: linear-gradient(135deg, #d16b8c 0%, #b84a6a 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(209, 107, 140, 0.25);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
             overflow: hidden;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-            white-space: nowrap;
-        }
-        th {
-            background-color: #007BFF;
-            color: white;
-            position: sticky;
+        header::after {
+            content: '';
+            position: absolute;
             top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transform: skewX(-15deg) translateX(100px);
         }
-        tbody tr:hover {
-            background-color: #f1f1f1;
-            transition: background-color 0.3s ease;
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
-        .loading {
+        .header-icon {
+            font-size: 2.8rem;
+            background: rgba(255,255,255,0.2);
+            padding: 18px;
+            border-radius: 25px;
+            backdrop-filter: blur(8px);
+        }
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            color: #ffd9e2;
+        }
+        .last-update {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 25px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 12px 28px;
+            background: #ffeef2;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #b84a6a;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.02);
+        }
+        .tab.active {
+            background: #d16b8c;
+            color: white;
+            box-shadow: 0 8px 16px rgba(209, 107, 140, 0.3);
+        }
+        .tab:hover {
+            background: #fbc1cc;
+            color: #b84a6a;
+        }
+        .reminder-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .reminder-card {
+            background: white;
+            border-radius: 24px;
+            padding: 18px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 8px 18px rgba(184, 74, 106, 0.05);
+            border-left: 10px solid;
+        }
+        .reminder-card.warning { border-left-color: #f9b572; }
+        .reminder-card.danger { border-left-color: #e15554; }
+        .reminder-card.success { border-left-color: #6fcf97; }
+        .reminder-icon { font-size: 2.2rem; }
+        .reminder-content { flex: 1; }
+        .reminder-title { font-weight: 700; font-size: 1.2rem; margin-bottom: 4px; }
+        .reminder-desc { color: #5d5d5d; }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 28px;
+            box-shadow: 0 12px 28px rgba(184, 74, 106, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-left: 8px solid #d16b8c;
+        }
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: linear-gradient(145deg, #d16b8c, #b84a6a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+        .stat-info h3 {
+            font-size: 2.4rem;
+            margin-bottom: 5px;
+            font-weight: 700;
+            color: #b84a6a;
+        }
+        .stat-info p {
+            color: #7a5b6b;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        .progress-bar {
+            height: 12px;
+            background: #f1d3db;
+            border-radius: 20px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d16b8c, #b84a6a);
+        }
+        .data-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1000px) { .data-section { grid-template-columns: 1fr; } }
+        .card {
+            background: white;
+            border-radius: 32px;
+            padding: 30px;
+            box-shadow: 0 12px 28px rgba(184, 74, 106, 0.05);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ffe4e9;
+            padding-bottom: 15px;
+        }
+        .card-title {
+            font-size: 1.6rem;
+            color: #b84a6a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+        .chart-container { height: 380px; }
+        .monthly-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 8px 18px rgba(184,74,106,0.05);
+        }
+        .summary-card h4 { color: #b2809d; font-weight: 600; margin-bottom: 10px; }
+        .summary-card .amount { font-size: 2rem; font-weight: 700; color: #b84a6a; }
+
+        /* Daily & Monthly navigation (dari template pertama) */
+        .daily-navigation, .monthly-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        .daily-date-display, .monthly-date-display {
+            flex: 1;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #b84a6a;
+        }
+        .daily-nav-btn, .monthly-nav-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: #d16b8c;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .daily-nav-btn:hover, .monthly-nav-btn:hover { background: #b84a6a; }
+        .daily-today-btn, .monthly-today-btn { background: #b2809d; }
+        .daily-calendar-grid, .monthly-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .daily-calendar-day, .monthly-calendar-month {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(184,74,106,0.1);
+            border-left: 6px solid #d16b8c;
+        }
+        .daily-calendar-day.selected, .monthly-calendar-month.selected {
+            background: #d16b8c;
+            color: white;
+        }
+        .daily-transaction-list, .item-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .daily-transaction-item {
+            background: #fff5f7;
+            border-left: 6px solid #d16b8c;
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .monthly-category-card {
+            background: white;
+            border-radius: 28px;
+            margin-bottom: 25px;
+            border-left: 10px solid #d16b8c;
+        }
+        .monthly-category-header {
+            padding: 20px 25px;
+            background: #ffedf2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .monthly-category-title { font-size: 1.5rem; font-weight: 700; color: #b84a6a; }
+        .monthly-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 25px;
+            border-bottom: 1px solid #ffdee6;
+        }
+        .table-container { overflow-x: auto; border-radius: 24px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #ffdee6; padding: 18px 15px; color: #b84a6a; font-weight: 600; }
+        td { padding: 14px 15px; border-bottom: 1px solid #fad5df; }
+        .pagination {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-size: 1.5em;
-            color: #007BFF;
+            gap: 10px;
+            margin-top: 25px;
         }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #007BFF;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .page-btn {
+            padding: 10px 18px;
+            border: 1px solid #d16b8c;
+            background: white;
+            border-radius: 40px;
+            color: #b84a6a;
+            font-weight: 600;
+            cursor: pointer;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .home-button, .download-excel, .laporan-lengkap {
-            display: inline-block; /* Membuat tombol berjejer ke samping */
-            width: fit-content;
-            margin: 10px; /* Jarak antar tombol */
-            padding: 12px 24px;
-            color: white;
-            text-decoration: none;
-            font-size: 16px;
-            border-radius: 8px;
+        .page-btn.active, .page-btn:hover { background: #d16b8c; color: white; }
+        .footer {
             text-align: center;
-            transition: background-color 0.3s ease;
+            padding: 30px;
+            color: #b2809d;
+            background: white;
+            border-radius: 40px;
+            margin-top: 30px;
         }
-        .home-button {
-            background-color: #007BFF; /* Warna biru untuk tombol Home */
+        .hidden { display: none !important; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            background: #d16b8c;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
         }
-        .download-excel {
-            background-color: #28a745; /* Warna hijau untuk tombol Download Excel */
-        }
-        .laporan-lengkap {
-            background-color: #007BFF; /* Warna biru untuk tombol Laporan Lengkap */
-        }
-        .home-button:hover {
-            background-color: #0056b3; /* Efek hover untuk tombol Home */
-        }
-        .download-excel:hover {
-            background-color: #218838; /* Efek hover untuk tombol Download Excel */
-        }
-        .laporan-lengkap:hover {
-            background-color: #0056b3; /* Efek hover untuk tombol Laporan Lengkap */
-        }
-        .button-container {
-            text-align: center; /* Membuat tombol berada di tengah */
-            margin: 20px 0; /* Jarak dari elemen di atas dan bawah */
+        .btn-secondary { background: #ffe4e9; color: #b84a6a; }
+        .filter-select, .search-input {
+            padding: 12px 20px;
+            border: 2px solid #ffd2dd;
+            border-radius: 40px;
+            background: white;
         }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
+<div class="container">
+    <header>
+        <div class="header-info">
+            <div class="header-icon"><i class="fas fa-shopping-basket"></i></div>
+            <div>
+                <h1>Laporan Belanja Rumah Airahcomp</h1>
+                <p class="subtitle">Airahcomp • Smart Reminder • Rp5.000.000/bulan</p>
+            </div>
+        </div>
+        <div class="last-update"><i class="fas fa-clock"></i> <span id="lastUpdate">Memuat...</span></div>
+    </header>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('overview')">Ringkasan</button>
+        <button class="tab" onclick="showTab('daily')">Harian</button>
+        <button class="tab" onclick="showTab('transactions')">Transaksi</button>
+        <button class="tab" onclick="showTab('monthly')">Bulanan</button>
+        <button class="tab" onclick="showTab('annual')">Tahunan</button>
+        <button class="tab" onclick="showTab('items')">Analisis Item</button>
+        <button class="tab" onclick="showTab('trends')">Trend</button>
     </div>
-    <h2>Database Belanja di Cermat-Cloud</h2>
-    <div class="button-container">
-        <a href="https://sites.google.com/view/cermat-cloud" class="home-button">Home - Cermat Cloud</a>
-        <button id="download-excel" class="download-excel">Download Excel</button>
-        <a href="https://lookerstudio.google.com/reporting/15d5f450-08ab-4917-8fae-ea217ca518b1" class="laporan-lengkap">Laporan Lengkap</a>
+
+    <!-- Container untuk reminder cerdas -->
+    <div id="reminderContainer" class="reminder-container"></div>
+
+    <!-- =============== RINGKASAN =============== -->
+    <div id="overviewTab" class="tab-content">
+        <div class="stats-container">
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-shopping-cart"></i></div><div class="stat-info"><h3 id="totalExpense">Rp 0</h3><p>Total Belanja</p></div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-calendar-alt"></i></div><div class="stat-info"><h3 id="monthlyExpense">Rp 0</h3><p>Bulan Ini</p></div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-crown"></i></div><div class="stat-info"><h3 id="topExpenseItem">-</h3><p id="topExpenseAmount">Rp 0</p></div></div>
+        </div>
+
+        <div class="monthly-summary">
+            <div class="summary-card"><h4>Rata-rata Harian</h4><div class="amount" id="avgDaily">Rp 0</div></div>
+            <div class="summary-card"><h4>Proyeksi Akhir Bulan</h4><div class="amount" id="projectedMonth">Rp 0</div></div>
+            <div class="summary-card"><h4>Sisa Budget (5jt)</h4><div class="amount" id="remainingBudget">Rp 0</div></div>
+            <div class="summary-card"><h4>Persentase</h4><div class="amount" id="percentBudget">0%</div></div>
+        </div>
+
+        <div class="data-section">
+            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-chart-line"></i> Trend Bulanan</h2></div><div class="chart-container"><canvas id="monthlyTrendChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-chart-pie"></i> Kategori Item</h2></div><div class="chart-container"><canvas id="categoryChart"></canvas></div><div id="categoryBreakdown" class="item-list" style="margin-top:20px;"></div></div>
+        </div>
     </div>
-    <label for="filterSKPD">Pilih SKPD:</label>
-    <select id="filterSKPD">
-        <option value="">Semua</option>
-    </select>
-    <table>
-        <thead id="tableHeader"></thead>
-        <tbody id="dataBody"></tbody>
-    </table>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQnybc1gMdp6PBJpa-FnjeR7_wJDGOj3QIxTnkXbreT0OxDsXhMK_AnifZrVDEanVqIfoHfAV2DnGyk/pub?gid=58869595&single=true&output=csv";
+    <!-- =============== HARIAN =============== -->
+    <div id="dailyTab" class="tab-content hidden">
+        <div class="daily-navigation">
+            <button class="daily-nav-btn" onclick="navigateDailyDate(-1)"><i class="fas fa-chevron-left"></i></button>
+            <div class="daily-date-display" id="currentDailyDateDisplay">Memuat...</div>
+            <button class="daily-nav-btn" onclick="navigateDailyDate(1)"><i class="fas fa-chevron-right"></i></button>
+            <button class="daily-nav-btn daily-today-btn" onclick="goToToday()"><i class="fas fa-calendar-day"></i></button>
+        </div>
+        <div class="stats-container" style="grid-template-columns: repeat(3,1fr);">
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div><div class="stat-info"><h3 id="dailyExpense">Rp 0</h3><p>Pengeluaran Harian</p></div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-receipt"></i></div><div class="stat-info"><h3 id="dailyTransactionCount">0</h3><p>Jumlah Transaksi</p></div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-line"></i></div><div class="stat-info"><h3 id="dailyAvg">Rp 0</h3><p>Rata-rata per Item</p></div></div>
+        </div>
+        <div class="data-section">
+            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-chart-pie"></i> Distribusi Item</h2></div><div class="chart-container"><canvas id="dailyTransactionChart"></canvas></div></div>
+            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-list"></i> Daftar Belanja</h2></div><div id="dailyTransactionsContainer" class="daily-transaction-list"></div><div id="dailyNoData" class="daily-empty-state" style="display:none; text-align:center; padding:40px;"><i class="fas fa-calendar-times fa-3x"></i><h3>Tidak ada transaksi</h3></div></div>
+        </div>
+        <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-calendar-alt"></i> Kalender</h2></div><div class="daily-calendar-grid" id="dailyCalendar"></div></div>
+    </div>
 
-            fetch(sheetURL)
-                .then(response => response.text())
-                .then(csvData => {
-                    Papa.parse(csvData, {
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: function (result) {
-                            const data = result.data;
-                            const header = Object.keys(data[0]);
+    <!-- =============== TRANSAKSI =============== -->
+    <div id="transactionsTab" class="tab-content hidden">
+        <div style="display: flex; gap:15px; margin-bottom:25px; flex-wrap:wrap;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari item...">
+            <select id="monthFilter" class="filter-select"><option value="all">Semua Bulan</option></select>
+            <button class="btn btn-secondary" onclick="filterTransactions()"><i class="fas fa-filter"></i> Filter</button>
+            <button class="btn" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+        </div>
+        <div class="card">
+            <table id="dataTable">
+                <thead><tr><th>Tanggal</th><th>Item</th><th>Jumlah</th><th>Satuan</th><th>Harga Satuan</th><th>Total</th><th>Deskripsi</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </div>
 
-                            const skpdSet = new Set();
-                            data.forEach(row => skpdSet.add(row["SKPD"]));
+    <!-- =============== BULANAN =============== -->
+    <div id="monthlyTab" class="tab-content hidden">
+        <div class="monthly-navigation">
+            <button class="monthly-nav-btn" onclick="navigateMonthlyDate(-1)"><i class="fas fa-chevron-left"></i></button>
+            <div class="monthly-date-display" id="currentMonthlyDateDisplay">Memuat...</div>
+            <button class="monthly-nav-btn" onclick="navigateMonthlyDate(1)"><i class="fas fa-chevron-right"></i></button>
+            <button class="monthly-nav-btn monthly-today-btn" onclick="goToCurrentMonth()"><i class="fas fa-calendar-alt"></i></button>
+        </div>
+        <div class="stats-container" style="grid-template-columns: repeat(2,1fr);">
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-chart-pie"></i></div><div class="stat-info"><h3 id="monthlyViewExpense">Rp 0</h3><p>Total Bulan</p></div></div>
+            <div class="stat-card"><div class="stat-icon"><i class="fas fa-cubes"></i></div><div class="stat-info"><h3 id="monthlyTransactionCount">0</h3><p>Transaksi</p></div></div>
+        </div>
+        <div id="monthlyCategoriesContainer"></div>
+        <div id="monthlyNoData" class="monthly-empty-state hidden" style="text-align:center; padding:40px;"><i class="fas fa-calendar-times fa-3x"></i><h3>Tidak ada transaksi bulan ini</h3></div>
+        <div class="card" style="margin-top:30px;"><div class="card-header"><h2 class="card-title"><i class="fas fa-calendar-alt"></i> Kalender Bulanan</h2></div><div class="monthly-calendar-grid" id="monthlyCalendar"></div></div>
+    </div>
 
-                            const filterSelect = document.getElementById("filterSKPD");
-                            skpdSet.forEach(skpd => {
-                                const option = document.createElement("option");
-                                option.value = skpd;
-                                option.textContent = skpd;
-                                filterSelect.appendChild(option);
-                            });
+    <!-- =============== TAHUNAN =============== -->
+    <div id="annualTab" class="tab-content hidden">
+        <div class="card">
+            <table>
+                <thead><tr><th>Tahun</th><th>Total Belanja</th><th>Item Teratas</th><th>Jumlah</th></tr></thead>
+                <tbody id="annualTableBody"></tbody>
+            </table>
+        </div>
+    </div>
 
-                            const thead = document.getElementById("tableHeader");
-                            const trHead = document.createElement("tr");
-                            header.forEach(col => {
-                                let th = document.createElement("th");
-                                th.textContent = col;
-                                trHead.appendChild(th);
-                            });
-                            thead.appendChild(trHead);
+    <!-- =============== ANALISIS ITEM =============== -->
+    <div id="itemsTab" class="tab-content hidden">
+        <div class="data-section">
+            <div class="card"><div class="card-header"><h2 class="card-title">Top 10 Item Termahal</h2></div><div id="topExpenseItems" class="item-list"></div></div>
+            <div class="card"><div class="card-header"><h2 class="card-title">Top 10 Item Terlaris (Frekuensi)</h2></div><div id="topFreqItems" class="item-list"></div></div>
+        </div>
+    </div>
 
-                            function renderTable(filterValue) {
-                                const tbody = document.getElementById("dataBody");
-                                tbody.innerHTML = "";
-                                return data.filter(row => filterValue === "" || row["SKPD"] === filterValue).map(row => {
-                                    let tr = document.createElement("tr");
-                                    header.forEach(col => {
-                                        let td = document.createElement("td");
-                                        td.textContent = row[col];
-                                        tr.appendChild(td);
-                                    });
-                                    tbody.appendChild(tr);
-                                    return row;
-                                });
-                            }
+    <!-- =============== TREND =============== -->
+    <div id="trendsTab" class="tab-content hidden">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title"><i class="fas fa-chart-bar"></i> Tren Pengeluaran Bulanan</h2></div>
+            <div class="chart-container"><canvas id="incomeExpenseTrendChart"></canvas></div>
+        </div>
+    </div>
 
-                            filterSelect.addEventListener("change", function () {
-                                renderTable(this.value);
-                            });
+    <div class="footer">✨ Laporan Belanja Rumah Airahcomp • Batas bulanan Rp5.000.000 • Airahcomp ✨</div>
+</div>
 
-                            renderTable("");
-                            document.getElementById("loading").style.display = "none";
+<script>
+    // ================= KONFIGURASI =================
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTPqLce61g67cVx4z7mhVrUzVJM3wmI0J8LxpMZRaz2P6agbldbdxxIzu53gfL6yQxQ4vcCuuhJ0oGA/pub?gid=0&single=true&output=csv';
+    const MONTHLY_LIMIT = 5000000; // 5 juta
 
-                            document.getElementById("download-excel").addEventListener("click", function () {
-                                let filteredData = renderTable(filterSelect.value);
-                                if (filteredData.length === 0) return alert("Tidak ada data untuk diunduh.");
-                                let ws = XLSX.utils.json_to_sheet(filteredData);
-                                let wb = XLSX.utils.book_new();
-                                XLSX.utils.book_append_sheet(wb, ws, "Data");
-                                XLSX.writeFile(wb, "Filtered_Data.xlsx");
-                            });
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching data:", error);
-                    document.getElementById("loading").textContent = "Gagal memuat data. Silakan coba lagi.";
-                });
+    let currentData = [];
+    let filteredData = [];
+    let dailyTransactionsByDate = {};
+    let monthlyTransactionsByMonth = {};
+    let allDatesWithData = [];
+    let allMonthsWithData = [];
+    let currentDailyDate = new Date();
+    let currentMonthlyDate = new Date();
+    currentMonthlyDate.setDate(1);
+
+    // ================= UTILITY =================
+    function formatRupiah(amount) {
+        return 'Rp ' + Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    // Membersihkan angka dari format Rupiah (titik ribuan, koma desimal)
+    function parseNumber(str) {
+        if (!str) return 0;
+        // Hapus "Rp", spasi, dan titik ribuan, lalu ganti koma desimal dengan titik
+        let cleaned = str.toString()
+            .replace(/Rp/gi, '')
+            .replace(/\s+/g, '')
+            .replace(/\./g, '')        // hapus titik ribuan
+            .replace(',', '.');         // ganti koma desimal menjadi titik
+        let num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+    }
+
+    // Parsing tanggal dengan format bulan/tanggal/tahun
+    function parseDateFromData(dateStr) {
+        if (!dateStr) return null;
+        let parts = dateStr.split('/');
+        if (parts.length === 3) {
+            // format: month/day/year
+            let month = parseInt(parts[0], 10) - 1; // JS bulan 0-11
+            let day = parseInt(parts[1], 10);
+            let year = parseInt(parts[2], 10);
+            return new Date(year, month, day);
+        }
+        return null;
+    }
+
+    function formatDateKey(date) {
+        return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+    }
+    function formatMonthKey(date) {
+        return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0');
+    }
+    function formatDisplayDate(date) {
+        return date.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+    }
+    function formatDisplayMonth(date) {
+        return date.toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+    }
+
+    // ================= PARSE CSV (format baru, case‑insensitive) =================
+    function parseCSV(csv) {
+        const lines = csv.split('\n').filter(l => l.trim() !== '');
+        if (lines.length === 0) return [];
+
+        // Header: ubah ke lowercase dan trim untuk pencocokan fleksibel
+        const rawHeaders = lines[0].split(',').map(h => h.trim());
+        const headers = rawHeaders.map(h => h.toLowerCase());
+
+        // Cari indeks kolom yang dibutuhkan
+        const idxTanggal = headers.findIndex(h => h.includes('tanggal') || h.includes('date'));
+        const idxBulan = headers.findIndex(h => h.includes('bulan') || h.includes('month'));
+        const idxItem = headers.findIndex(h => h.includes('item') || h.includes('belanja') || h.includes('nama'));
+        const idxSatuan = headers.findIndex(h => h.includes('satuan') || h.includes('unit'));
+        const idxJumlah = headers.findIndex(h => h.includes('jumlah') || h.includes('qty') || h.includes('quantity'));
+        const idxHargaSatuan = headers.findIndex(h => h.includes('harga satuan') || h.includes('price per unit'));
+        const idxHargaJumlah = headers.findIndex(h => h.includes('harga jumlah') || h.includes('total') || h.includes('amount')); // kolom G
+        const idxDeskripsi = headers.findIndex(h => h.includes('deskripsi') || h.includes('keterangan') || h.includes('desc'));
+
+        const data = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim());
+            if (values.length < headers.length) continue;
+
+            // Ambil nilai berdasarkan indeks (jika tidak ditemukan, gunakan string kosong)
+            const getVal = (idx) => (idx !== -1 && idx < values.length) ? values[idx] : '';
+
+            const tanggal = getVal(idxTanggal);
+            const bulan = getVal(idxBulan);
+            const item = getVal(idxItem);
+            const satuan = getVal(idxSatuan);
+            const jumlahStr = getVal(idxJumlah);
+            const hargaSatuanStr = getVal(idxHargaSatuan);
+            const totalStr = getVal(idxHargaJumlah); // kolom G
+            const deskripsi = getVal(idxDeskripsi);
+
+            // Parsing angka
+            const jumlah = parseNumber(jumlahStr);
+            const hargaSatuan = parseNumber(hargaSatuanStr);
+            const total = parseNumber(totalStr);
+
+            // Abaikan jika total 0 (mungkin baris kosong)
+            if (total === 0) continue;
+
+            data.push({
+                TANGGAL: tanggal,
+                BULAN: bulan,          // bisa berupa teks (Januari, Februari, ...)
+                'NAMA ITEM': item || 'Tanpa Nama',
+                NILAIout: total,
+                KETERANGAN: deskripsi,
+                satuan: satuan,
+                jumlah: jumlah,
+                hargaSatuan: hargaSatuan,
+                // tambahkan juga tanggal terparsed untuk keperluan sorting/grouping
+                _dateObj: parseDateFromData(tanggal)
+            });
+        }
+        return data;
+    }
+
+    // ================= PROSES HARIAN & BULANAN =================
+    function processDailyData(data) {
+        dailyTransactionsByDate = {};
+        allDatesWithData = [];
+        data.forEach(tr => {
+            let date = tr._dateObj;
+            if (!date) return;
+            let key = formatDateKey(date);
+            if (!dailyTransactionsByDate[key]) {
+                dailyTransactionsByDate[key] = { expense: 0, transactions: [] };
+                allDatesWithData.push({ date, key });
+            }
+            dailyTransactionsByDate[key].expense += tr.NILAIout;
+            dailyTransactionsByDate[key].transactions.push(tr);
         });
-    </script>
+        allDatesWithData.sort((a,b) => b.date - a.date);
+    }
+
+    function processMonthlyData(data) {
+        monthlyTransactionsByMonth = {};
+        allMonthsWithData = [];
+        data.forEach(tr => {
+            let date = tr._dateObj;
+            if (!date) return;
+            let key = formatMonthKey(date);
+            if (!monthlyTransactionsByMonth[key]) {
+                monthlyTransactionsByMonth[key] = { expense: 0, transactions: [], monthName: tr.BULAN };
+                let firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+                allMonthsWithData.push({ date: firstDay, key });
+            }
+            monthlyTransactionsByMonth[key].expense += tr.NILAIout;
+            monthlyTransactionsByMonth[key].transactions.push(tr);
+        });
+        allMonthsWithData.sort((a,b) => b.date - a.date);
+    }
+
+    // ================= UPDATE DASHBOARD =================
+    function updateDashboard() {
+        // Hitung total, bulan berjalan, item terbesar
+        let totalExpense = currentData.reduce((acc, r) => acc + r.NILAIout, 0);
+        let now = new Date();
+        let currentMonthKey = formatMonthKey(now);
+        let monthlyExpense = monthlyTransactionsByMonth[currentMonthKey]?.expense || 0;
+
+        // Item terbesar
+        let itemsTotal = {};
+        currentData.forEach(r => {
+            itemsTotal[r['NAMA ITEM']] = (itemsTotal[r['NAMA ITEM']] || 0) + r.NILAIout;
+        });
+        let topItem = '', topAmount = 0;
+        for (let [it, am] of Object.entries(itemsTotal)) {
+            if (am > topAmount) { topAmount = am; topItem = it; }
+        }
+
+        document.getElementById('totalExpense').innerText = formatRupiah(totalExpense);
+        document.getElementById('monthlyExpense').innerText = formatRupiah(monthlyExpense);
+        document.getElementById('topExpenseItem').innerText = topItem.slice(0,15) + (topItem.length>15?'...':'');
+        document.getElementById('topExpenseAmount').innerText = formatRupiah(topAmount);
+
+        // Average daily (30 hari)
+        let avgDaily = totalExpense / 30;
+        document.getElementById('avgDaily').innerText = formatRupiah(avgDaily);
+
+        // Proyeksi akhir bulan
+        let hariInBulan = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+        let hariBerlalu = now.getDate();
+        let avgPerHari = monthlyExpense / hariBerlalu || 0;
+        let proyeksi = avgPerHari * hariInBulan;
+        document.getElementById('projectedMonth').innerText = formatRupiah(proyeksi);
+
+        let sisa = MONTHLY_LIMIT - monthlyExpense;
+        document.getElementById('remainingBudget').innerText = formatRupiah(sisa);
+        let persen = (monthlyExpense / MONTHLY_LIMIT * 100).toFixed(1);
+        document.getElementById('percentBudget').innerText = persen + '%';
+
+        // Reminder cerdas
+        showReminders(monthlyExpense, sisa, persen);
+
+        // Update chart
+        updateCharts();
+        // Update tabel transaksi
+        renderTable(currentData);
+        // Update item lists
+        updateItemLists(itemsTotal);
+        // Update annual
+        updateAnnual();
+        // Update monthly categories
+        renderMonthlyCategories();
+
+        // Update daily view if visible
+        if (!document.getElementById('dailyTab').classList.contains('hidden')) updateDailyView();
+        if (!document.getElementById('monthlyTab').classList.contains('hidden')) updateMonthlyView();
+    }
+
+    function showReminders(monthly, sisa, persen) {
+        let container = document.getElementById('reminderContainer');
+        container.innerHTML = '';
+        let monthName = new Date().toLocaleString('id', { month: 'long' });
+        if (monthly > MONTHLY_LIMIT) {
+            container.innerHTML += `<div class="reminder-card danger"><i class="fas fa-exclamation-triangle reminder-icon" style="color:#e15554;"></i><div class="reminder-content"><div class="reminder-title">⚠️ Darurat! Melebihi batas</div><div class="reminder-desc">Pengeluaran bulan ${monthName} sudah ${formatRupiah(monthly)}. Batas Rp5.000.000 dilewati sebesar ${formatRupiah(monthly-MONTHLY_LIMIT)}.</div></div></div>`;
+        } else if (monthly > MONTHLY_LIMIT * 0.9) {
+            container.innerHTML += `<div class="reminder-card warning"><i class="fas fa-clock reminder-icon" style="color:#f9b572;"></i><div class="reminder-content"><div class="reminder-title">⚠️ Mendekati batas</div><div class="reminder-desc">Sudah ${persen}% dari limit. Sisa ${formatRupiah(sisa)}. Kendalikan belanja!</div></div></div>`;
+        } else if (monthly > MONTHLY_LIMIT * 0.75) {
+            container.innerHTML += `<div class="reminder-card"><i class="fas fa-info-circle reminder-icon" style="color:#d16b8c;"></i><div class="reminder-content"><div class="reminder-title">💡 Pengingat</div><div class="reminder-desc">Sisa budget bulan ini ${formatRupiah(sisa)}. Masih aman, tapi tetap waspada.</div></div></div>`;
+        } else {
+            container.innerHTML += `<div class="reminder-card success"><i class="fas fa-smile reminder-icon" style="color:#6fcf97;"></i><div class="reminder-content"><div class="reminder-title">✅ Keuangan sehat</div><div class="reminder-desc">Bulan ${monthName} baru terpakai ${persen}% dari limit. Sisa ${formatRupiah(sisa)}. Good job!</div></div></div>`;
+        }
+    }
+
+    // ================= CHART =================
+    let chartInst = {};
+    function updateCharts() {
+        // monthly trend (urutkan bulan)
+        let months = Object.keys(monthlyTransactionsByMonth).sort();
+        let values = months.map(m => monthlyTransactionsByMonth[m].expense);
+        if (chartInst.monthly) chartInst.monthly.destroy();
+        let ctx1 = document.getElementById('monthlyTrendChart')?.getContext('2d');
+        if (ctx1) {
+            chartInst.monthly = new Chart(ctx1, {
+                type: 'line',
+                data: { labels: months, datasets: [{ label: 'Total Belanja', data: values, borderColor: '#d16b8c', backgroundColor: 'rgba(209,107,140,0.1)' }] },
+                options: { responsive: true }
+            });
+        }
+
+        // category chart (top 7)
+        let catMap = {};
+        currentData.forEach(r => { catMap[r['NAMA ITEM']] = (catMap[r['NAMA ITEM']] || 0) + r.NILAIout; });
+        let sortedCat = Object.entries(catMap).sort((a,b) => b[1]-a[1]).slice(0,7);
+        if (chartInst.cat) chartInst.cat.destroy();
+        let ctx2 = document.getElementById('categoryChart')?.getContext('2d');
+        if (ctx2) {
+            chartInst.cat = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: sortedCat.map(c=>c[0]),
+                    datasets: [{ data: sortedCat.map(c=>c[1]), backgroundColor: ['#d16b8c','#b84a6a','#e599b5','#c46487','#a5486b','#f7a8be','#b2809d'] }]
+                }
+            });
+        }
+        // category breakdown list
+        let catHtml = '';
+        sortedCat.forEach(([name, val]) => {
+            catHtml += `<div class="item-row"><span class="item-name">${name}</span><span class="item-amount">${formatRupiah(val)}</span></div>`;
+        });
+        document.getElementById('categoryBreakdown').innerHTML = catHtml;
+
+        // trend chart (bar)
+        if (chartInst.trend) chartInst.trend.destroy();
+        let ctx3 = document.getElementById('incomeExpenseTrendChart')?.getContext('2d');
+        if (ctx3) {
+            chartInst.trend = new Chart(ctx3, {
+                type: 'bar',
+                data: { labels: months, datasets: [{ label: 'Pengeluaran', data: values, backgroundColor: '#d16b8c' }] }
+            });
+        }
+    }
+
+    function updateItemLists(itemsTotal) {
+        let sortedByTotal = Object.entries(itemsTotal).sort((a,b) => b[1]-a[1]).slice(0,10);
+        let htmlTotal = '';
+        sortedByTotal.forEach(([it, am]) => {
+            htmlTotal += `<div class="item-row"><span class="item-name">${it}</span><span class="item-amount">${formatRupiah(am)}</span></div>`;
+        });
+        document.getElementById('topExpenseItems').innerHTML = htmlTotal || '<div class="item-row">Tidak ada data</div>';
+
+        // Frekuensi
+        let freq = {};
+        currentData.forEach(r => freq[r['NAMA ITEM']] = (freq[r['NAMA ITEM']] || 0) + 1);
+        let sortedFreq = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0,10);
+        let htmlFreq = '';
+        sortedFreq.forEach(([it, ct]) => {
+            htmlFreq += `<div class="item-row"><span class="item-name">${it} <span class="item-badge">${ct}x</span></span><span class="item-amount">${formatRupiah(itemsTotal[it] || 0)}</span></div>`;
+        });
+        document.getElementById('topFreqItems').innerHTML = htmlFreq;
+    }
+
+    function updateAnnual() {
+        let annual = {};
+        currentData.forEach(r => {
+            let tahun = r.TANGGAL?.split('/')[2] || '2026';
+            if (!annual[tahun]) annual[tahun] = { total:0, items:{} };
+            annual[tahun].total += r.NILAIout;
+            annual[tahun].items[r['NAMA ITEM']] = (annual[tahun].items[r['NAMA ITEM']] || 0) + r.NILAIout;
+        });
+        let tbody = document.getElementById('annualTableBody');
+        let html = '';
+        Object.keys(annual).sort().reverse().forEach(tahun => {
+            let data = annual[tahun];
+            let topItem = Object.entries(data.items).sort((a,b) => b[1]-a[1])[0] || ['-',0];
+            html += `<tr><td>${tahun}</td><td>${formatRupiah(data.total)}</td><td>${topItem[0]}</td><td>${formatRupiah(topItem[1])}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function renderMonthlyCategories() {
+        let container = document.getElementById('monthlyCategoriesContainer');
+        let html = '';
+        Object.keys(monthlyTransactionsByMonth).sort().reverse().forEach(key => {
+            let data = monthlyTransactionsByMonth[key];
+            let items = {};
+            data.transactions.forEach(tr => {
+                items[tr['NAMA ITEM']] = (items[tr['NAMA ITEM']] || 0) + tr.NILAIout;
+            });
+            let sortedItems = Object.entries(items).sort((a,b) => b[1]-a[1]).slice(0,10);
+            let itemsHtml = sortedItems.map(([it, am]) => `<div class="monthly-item-row"><span>${it}</span><span>${formatRupiah(am)}</span></div>`).join('');
+            html += `<div class="monthly-category-card"><div class="monthly-category-header"><span class="monthly-category-title">${data.monthName || key}</span><span>${formatRupiah(data.expense)} (${data.transactions.length} transaksi)</span></div><div class="monthly-category-body">${itemsHtml}</div></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // ================= TABEL TRANSAKSI =================
+    function renderTable(data, page=1, perPage=15) {
+        let tbody = document.getElementById('tableBody');
+        let start = (page-1)*perPage;
+        let paged = data.slice(start, start+perPage);
+        tbody.innerHTML = '';
+        paged.forEach(r => {
+            tbody.innerHTML += `<tr><td>${r.TANGGAL}</td><td>${r['NAMA ITEM']}</td><td>${r.jumlah}</td><td>${r.satuan}</td><td>${formatRupiah(r.hargaSatuan)}</td><td>${formatRupiah(r.NILAIout)}</td><td>${r.KETERANGAN}</td></tr>`;
+        });
+        let totalPages = Math.ceil(data.length/perPage);
+        let pagi = '<button class="page-btn" onclick="changePage(1)">«</button>';
+        for (let i=1; i<=totalPages; i++) {
+            pagi += `<button class="page-btn ${i===page?'active':''}" onclick="changePage(${i})">${i}</button>`;
+        }
+        pagi += `<button class="page-btn" onclick="changePage(${totalPages})">»</button>`;
+        document.getElementById('pagination').innerHTML = pagi;
+        window.currentPageData = data;
+        window.currentPage = page;
+    }
+    window.changePage = (p) => renderTable(window.currentPageData || currentData, p);
+
+    window.filterTransactions = function() {
+        let search = document.getElementById('searchInput').value.toLowerCase();
+        let month = document.getElementById('monthFilter').value;
+        filteredData = currentData.filter(r => {
+            if (search && !r['NAMA ITEM'].toLowerCase().includes(search) && !r.KETERANGAN.toLowerCase().includes(search)) return false;
+            if (month !== 'all' && r.BULAN !== month) return false;
+            return true;
+        });
+        renderTable(filteredData, 1);
+    };
+
+    window.exportCSV = function() {
+        let csv = "Tanggal,Item,Jumlah,Satuan,Harga Satuan,Total,Deskripsi\n";
+        currentData.forEach(r => {
+            csv += `${r.TANGGAL},${r['NAMA ITEM']},${r.jumlah},${r.satuan},${r.hargaSatuan},${r.NILAIout},${r.KETERANGAN}\n`;
+        });
+        let blob = new Blob([csv], {type:'text/csv'});
+        let a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'belanja_airahcomp.csv';
+        a.click();
+    };
+
+    // ================= HARIAN =================
+    window.navigateDailyDate = (step) => {
+        currentDailyDate.setDate(currentDailyDate.getDate() + step);
+        updateDailyView();
+    };
+    window.goToToday = () => {
+        currentDailyDate = new Date();
+        updateDailyView();
+    };
+    function updateDailyView() {
+        let key = formatDateKey(currentDailyDate);
+        let data = dailyTransactionsByDate[key] || { expense:0, transactions:[] };
+        document.getElementById('currentDailyDateDisplay').innerText = formatDisplayDate(currentDailyDate);
+        document.getElementById('dailyExpense').innerText = formatRupiah(data.expense);
+        document.getElementById('dailyTransactionCount').innerText = data.transactions.length;
+        let avg = data.transactions.length ? data.expense / data.transactions.length : 0;
+        document.getElementById('dailyAvg').innerText = formatRupiah(avg);
+        let container = document.getElementById('dailyTransactionsContainer');
+        if (data.transactions.length) {
+            let html = '';
+            data.transactions.forEach(tr => {
+                html += `<div class="daily-transaction-item"><span>${tr['NAMA ITEM']} (${tr.jumlah} ${tr.satuan})</span><span>${formatRupiah(tr.NILAIout)}</span></div>`;
+            });
+            container.innerHTML = html;
+            document.getElementById('dailyNoData').style.display = 'none';
+        } else {
+            container.innerHTML = '';
+            document.getElementById('dailyNoData').style.display = 'block';
+        }
+        updateDailyChart(data);
+        updateDailyCalendar();
+    }
+    function updateDailyChart(data) {
+        if (chartInst.daily) chartInst.daily.destroy();
+        let ctx = document.getElementById('dailyTransactionChart')?.getContext('2d');
+        if (!ctx) return;
+        if (!data.transactions.length) {
+            chartInst.daily = new Chart(ctx, { type: 'doughnut', data: { labels: ['Tidak ada'], datasets: [{ data: [1], backgroundColor: ['#f1d3db'] }] } });
+            return;
+        }
+        let cat = {};
+        data.transactions.forEach(tr => cat[tr['NAMA ITEM']] = (cat[tr['NAMA ITEM']] || 0) + tr.NILAIout);
+        let labels = Object.keys(cat);
+        let values = Object.values(cat);
+        chartInst.daily = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data: values, backgroundColor: ['#d16b8c','#b84a6a','#e599b5','#c46487','#a5486b'] }] } });
+    }
+    function updateDailyCalendar() {
+        let grid = document.getElementById('dailyCalendar');
+        let html = '';
+        allDatesWithData.slice(0,15).forEach(item => {
+            let key = item.key;
+            let data = dailyTransactionsByDate[key];
+            let selected = (key === formatDateKey(currentDailyDate)) ? 'selected' : '';
+            html += `<div class="daily-calendar-day ${selected}" onclick="selectDailyDate('${key}')"><div>${item.date.getDate()}</div><div>${formatRupiah(data.expense)}</div><div>${data.transactions.length} item</div></div>`;
+        });
+        grid.innerHTML = html;
+    }
+    window.selectDailyDate = (key) => {
+        let parts = key.split('-');
+        currentDailyDate = new Date(parts[0], parts[1]-1, parts[2]);
+        updateDailyView();
+    };
+
+    // ================= BULANAN =================
+    window.navigateMonthlyDate = (step) => {
+        currentMonthlyDate.setMonth(currentMonthlyDate.getMonth() + step);
+        updateMonthlyView();
+    };
+    window.goToCurrentMonth = () => {
+        currentMonthlyDate = new Date();
+        currentMonthlyDate.setDate(1);
+        updateMonthlyView();
+    };
+    function updateMonthlyView() {
+        let key = formatMonthKey(currentMonthlyDate);
+        let data = monthlyTransactionsByMonth[key] || { expense:0, transactions:[] };
+        document.getElementById('currentMonthlyDateDisplay').innerText = formatDisplayMonth(currentMonthlyDate);
+        document.getElementById('monthlyViewExpense').innerText = formatRupiah(data.expense);
+        document.getElementById('monthlyTransactionCount').innerText = data.transactions.length;
+        // Tampilkan kategori
+        renderMonthlyCategoriesForMonth(key);
+        updateMonthlyCalendar();
+    }
+    function renderMonthlyCategoriesForMonth(monthKey) {
+        let container = document.getElementById('monthlyCategoriesContainer');
+        let data = monthlyTransactionsByMonth[monthKey];
+        if (!data) { container.innerHTML = ''; document.getElementById('monthlyNoData').classList.remove('hidden'); return; }
+        document.getElementById('monthlyNoData').classList.add('hidden');
+        let items = {};
+        data.transactions.forEach(tr => items[tr['NAMA ITEM']] = (items[tr['NAMA ITEM']] || 0) + tr.NILAIout);
+        let sorted = Object.entries(items).sort((a,b) => b[1]-a[1]);
+        let html = `<div class="monthly-category-card"><div class="monthly-category-header"><span class="monthly-category-title">${data.monthName || monthKey}</span><span>${formatRupiah(data.expense)} (${data.transactions.length} transaksi)</span></div>`;
+        sorted.forEach(([it, am]) => {
+            html += `<div class="monthly-item-row"><span>${it}</span><span>${formatRupiah(am)}</span></div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    }
+    function updateMonthlyCalendar() {
+        let grid = document.getElementById('monthlyCalendar');
+        let html = '';
+        allMonthsWithData.slice(0,12).forEach(item => {
+            let key = item.key;
+            let data = monthlyTransactionsByMonth[key];
+            let selected = (key === formatMonthKey(currentMonthlyDate)) ? 'selected' : '';
+            html += `<div class="monthly-calendar-month ${selected}" onclick="selectMonthlyDate('${key}')"><div>${item.date.toLocaleDateString('id-ID',{month:'short', year:'numeric'})}</div><div>${formatRupiah(data.expense)}</div></div>`;
+        });
+        grid.innerHTML = html;
+    }
+    window.selectMonthlyDate = (key) => {
+        let parts = key.split('-');
+        currentMonthlyDate = new Date(parts[0], parts[1]-1, 1);
+        updateMonthlyView();
+    };
+
+    // ================= TAB =================
+    window.showTab = function(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+        document.getElementById(tab+'Tab').classList.remove('hidden');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        if (tab === 'daily') updateDailyView();
+        if (tab === 'monthly') updateMonthlyView();
+    };
+
+    // ================= LOAD DATA =================
+    async function loadData() {
+        try {
+            let resp = await fetch(SHEET_URL);
+            let csv = await resp.text();
+            currentData = parseCSV(csv);
+            // urutkan descending by date (gunakan _dateObj)
+            currentData.sort((a,b) => {
+                let da = a._dateObj || new Date(0);
+                let db = b._dateObj || new Date(0);
+                return db - da;
+            });
+            filteredData = [...currentData];
+            processDailyData(currentData);
+            processMonthlyData(currentData);
+            updateDashboard();
+            document.getElementById('lastUpdate').innerText = new Date().toLocaleString('id-ID');
+
+            // populate month filter (ambil dari kolom BULAN)
+            let months = [...new Set(currentData.map(r => r.BULAN).filter(Boolean))];
+            let select = document.getElementById('monthFilter');
+            select.innerHTML = '<option value="all">Semua Bulan</option>';
+            months.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
+        } catch (e) {
+            console.error(e);
+            document.getElementById('reminderContainer').innerHTML = '<div class="reminder-card danger"><i class="fas fa-bug"></i> Gagal memuat data.</div>';
+        }
+    }
+
+    loadData();
+</script>
 </body>
 </html>
