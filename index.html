@@ -123,6 +123,7 @@
         .reminder-card.warning { border-left-color: #f9b572; }
         .reminder-card.danger { border-left-color: #e15554; }
         .reminder-card.success { border-left-color: #6fcf97; }
+        .reminder-card.info { border-left-color: #5bc0de; }
         .reminder-icon { font-size: 2.2rem; }
         .reminder-content { flex: 1; }
         .reminder-title { font-weight: 700; font-size: 1.2rem; margin-bottom: 4px; }
@@ -350,6 +351,20 @@
             border-radius: 40px;
             background: white;
         }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #ffe4e9;
+        }
+        .item-badge {
+            background: #d16b8c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -375,7 +390,7 @@
         <button class="tab" onclick="showTab('trends')">Trend</button>
     </div>
 
-    <!-- Container untuk reminder cerdas -->
+    <!-- Container untuk reminder cerdas (diperbanyak) -->
     <div id="reminderContainer" class="reminder-container"></div>
 
     <!-- =============== RINGKASAN =============== -->
@@ -414,7 +429,7 @@
         </div>
         <div class="data-section">
             <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-chart-pie"></i> Distribusi Item</h2></div><div class="chart-container"><canvas id="dailyTransactionChart"></canvas></div></div>
-            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-list"></i> Daftar Belanja</h2></div><div id="dailyTransactionsContainer" class="daily-transaction-list"></div><div id="dailyNoData" class="daily-empty-state" style="display:none; text-align:center; padding:40px;"><i class="fas fa-calendar-times fa-3x"></i><h3>Tidak ada transaksi</h3></div></div>
+            <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-list"></i> Daftar Belanja</h2></div><div id="dailyTransactionsContainer" class="daily-transaction-list"></div><div id="dailyNoData" style="display:none; text-align:center; padding:40px;"><i class="fas fa-calendar-times fa-3x"></i><h3>Tidak ada transaksi</h3></div></div>
         </div>
         <div class="card"><div class="card-header"><h2 class="card-title"><i class="fas fa-calendar-alt"></i> Kalender</h2></div><div class="daily-calendar-grid" id="dailyCalendar"></div></div>
     </div>
@@ -542,23 +557,21 @@
         return date.toLocaleDateString('id-ID', { month:'long', year:'numeric' });
     }
 
-    // ================= PARSE CSV (format baru, case‑insensitive) =================
+    // ================= PARSE CSV =================
     function parseCSV(csv) {
         const lines = csv.split('\n').filter(l => l.trim() !== '');
         if (lines.length === 0) return [];
 
-        // Header: ubah ke lowercase dan trim untuk pencocokan fleksibel
         const rawHeaders = lines[0].split(',').map(h => h.trim());
         const headers = rawHeaders.map(h => h.toLowerCase());
 
-        // Cari indeks kolom yang dibutuhkan
         const idxTanggal = headers.findIndex(h => h.includes('tanggal') || h.includes('date'));
         const idxBulan = headers.findIndex(h => h.includes('bulan') || h.includes('month'));
         const idxItem = headers.findIndex(h => h.includes('item') || h.includes('belanja') || h.includes('nama'));
         const idxSatuan = headers.findIndex(h => h.includes('satuan') || h.includes('unit'));
         const idxJumlah = headers.findIndex(h => h.includes('jumlah') || h.includes('qty') || h.includes('quantity'));
         const idxHargaSatuan = headers.findIndex(h => h.includes('harga satuan') || h.includes('price per unit'));
-        const idxHargaJumlah = headers.findIndex(h => h.includes('harga jumlah') || h.includes('total') || h.includes('amount')); // kolom G
+        const idxHargaJumlah = headers.findIndex(h => h.includes('harga jumlah') || h.includes('total') || h.includes('amount'));
         const idxDeskripsi = headers.findIndex(h => h.includes('deskripsi') || h.includes('keterangan') || h.includes('desc'));
 
         const data = [];
@@ -566,7 +579,6 @@
             const values = lines[i].split(',').map(v => v.trim());
             if (values.length < headers.length) continue;
 
-            // Ambil nilai berdasarkan indeks (jika tidak ditemukan, gunakan string kosong)
             const getVal = (idx) => (idx !== -1 && idx < values.length) ? values[idx] : '';
 
             const tanggal = getVal(idxTanggal);
@@ -575,27 +587,24 @@
             const satuan = getVal(idxSatuan);
             const jumlahStr = getVal(idxJumlah);
             const hargaSatuanStr = getVal(idxHargaSatuan);
-            const totalStr = getVal(idxHargaJumlah); // kolom G
+            const totalStr = getVal(idxHargaJumlah);
             const deskripsi = getVal(idxDeskripsi);
 
-            // Parsing angka
             const jumlah = parseNumber(jumlahStr);
             const hargaSatuan = parseNumber(hargaSatuanStr);
             const total = parseNumber(totalStr);
 
-            // Abaikan jika total 0 (mungkin baris kosong)
             if (total === 0) continue;
 
             data.push({
                 TANGGAL: tanggal,
-                BULAN: bulan,          // bisa berupa teks (Januari, Februari, ...)
+                BULAN: bulan,
                 'NAMA ITEM': item || 'Tanpa Nama',
                 NILAIout: total,
                 KETERANGAN: deskripsi,
                 satuan: satuan,
                 jumlah: jumlah,
                 hargaSatuan: hargaSatuan,
-                // tambahkan juga tanggal terparsed untuk keperluan sorting/grouping
                 _dateObj: parseDateFromData(tanggal)
             });
         }
@@ -638,15 +647,191 @@
         allMonthsWithData.sort((a,b) => b.date - a.date);
     }
 
+    // ================= REMINDER CERDAS (DIPERBANYAK) =================
+    function renderAllReminders(monthlyExpense, remainingBudget, percentUsed, monthTransactions) {
+        const container = document.getElementById('reminderContainer');
+        container.innerHTML = ''; // kosongkan
+
+        const now = new Date();
+        const currentDay = now.getDate();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const daysLeft = daysInMonth - currentDay; // sisa hari (tidak termasuk hari ini jika sudah dihitung)
+        const daysPassed = currentDay; // sudah termasuk hari ini
+
+        const monthName = now.toLocaleString('id', { month: 'long' });
+
+        // ----- 1. Budget Status Reminder (existing, diperluas) -----
+        let budgetCard = '';
+        if (monthlyExpense > MONTHLY_LIMIT) {
+            budgetCard = `
+                <div class="reminder-card danger">
+                    <i class="fas fa-exclamation-triangle reminder-icon" style="color:#e15554;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">⚠️ Darurat! Melebihi batas</div>
+                        <div class="reminder-desc">Pengeluaran bulan ${monthName} sudah ${formatRupiah(monthlyExpense)}. Batas Rp5.000.000 dilewati sebesar ${formatRupiah(monthlyExpense - MONTHLY_LIMIT)}.</div>
+                    </div>
+                </div>`;
+        } else if (monthlyExpense > MONTHLY_LIMIT * 0.9) {
+            budgetCard = `
+                <div class="reminder-card warning">
+                    <i class="fas fa-clock reminder-icon" style="color:#f9b572;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">⚠️ Mendekati batas</div>
+                        <div class="reminder-desc">Sudah ${percentUsed}% dari limit. Sisa ${formatRupiah(remainingBudget)}. Kendalikan belanja!</div>
+                    </div>
+                </div>`;
+        } else if (monthlyExpense > MONTHLY_LIMIT * 0.75) {
+            budgetCard = `
+                <div class="reminder-card info">
+                    <i class="fas fa-info-circle reminder-icon" style="color:#5bc0de;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">💡 Pengingat</div>
+                        <div class="reminder-desc">Sisa budget bulan ini ${formatRupiah(remainingBudget)}. Masih aman, tapi tetap waspada.</div>
+                    </div>
+                </div>`;
+        } else {
+            budgetCard = `
+                <div class="reminder-card success">
+                    <i class="fas fa-smile reminder-icon" style="color:#6fcf97;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">✅ Keuangan sehat</div>
+                        <div class="reminder-desc">Bulan ${monthName} baru terpakai ${percentUsed}% dari limit. Sisa ${formatRupiah(remainingBudget)}. Good job!</div>
+                    </div>
+                </div>`;
+        }
+        container.innerHTML += budgetCard;
+
+        // ----- 2. Reminder proyeksi harian (sulit/mudah) -----
+        if (daysLeft >= 0 && daysPassed > 0) {
+            const avgDailySoFar = monthlyExpense / daysPassed;
+            let requiredDaily = daysLeft > 0 ? remainingBudget / daysLeft : 0;
+            if (requiredDaily < 0) requiredDaily = 0;
+
+            let difficulty = '';
+            let icon = '';
+            let colorClass = 'info';
+            if (monthlyExpense > MONTHLY_LIMIT) {
+                // sudah over, tidak perlu
+            } else {
+                if (avgDailySoFar > requiredDaily && daysLeft > 0) {
+                    difficulty = `Sulit mencapai akhir bulan dengan sisa budget. Rata-rata harian saat ini ${formatRupiah(avgDailySoFar)} lebih besar dari kebutuhan harian ${formatRupiah(requiredDaily)}.`;
+                    icon = 'fa-solid fa-face-frown';
+                    colorClass = 'warning';
+                } else if (daysLeft === 0) {
+                    difficulty = `Hari terakhir bulan ini. Total pengeluaran ${formatRupiah(monthlyExpense)}.`;
+                    icon = 'fa-solid fa-calendar-check';
+                    colorClass = 'success';
+                } else {
+                    difficulty = `Masih mudah mencapai akhir bulan. Rata-rata harian saat ini ${formatRupiah(avgDailySoFar)} lebih kecil dari kebutuhan harian ${formatRupiah(requiredDaily)}.`;
+                    icon = 'fa-solid fa-face-smile';
+                    colorClass = 'success';
+                }
+                if (difficulty) {
+                    container.innerHTML += `
+                        <div class="reminder-card ${colorClass}">
+                            <i class="fas ${icon} reminder-icon" style="color:${colorClass==='warning'?'#f9b572':'#6fcf97'};"></i>
+                            <div class="reminder-content">
+                                <div class="reminder-title">📊 Proyeksi Akhir Bulan</div>
+                                <div class="reminder-desc">${difficulty} Sisa ${daysLeft} hari, sisa budget ${formatRupiah(remainingBudget)}.</div>
+                            </div>
+                        </div>`;
+                }
+            }
+        }
+
+        // ----- 3. Item terboros bulan ini -----
+        if (monthTransactions.length > 0) {
+            // hitung total per item
+            const itemTotals = {};
+            monthTransactions.forEach(tr => {
+                const item = tr['NAMA ITEM'];
+                itemTotals[item] = (itemTotals[item] || 0) + tr.NILAIout;
+            });
+            const sortedItems = Object.entries(itemTotals).sort((a,b) => b[1] - a[1]);
+            const topItem = sortedItems[0];
+            if (topItem) {
+                const [itemName, itemTotal] = topItem;
+                const percentage = (itemTotal / monthlyExpense * 100).toFixed(1);
+                container.innerHTML += `
+                    <div class="reminder-card info">
+                        <i class="fas fa-crown reminder-icon" style="color:#d16b8c;"></i>
+                        <div class="reminder-content">
+                            <div class="reminder-title">👑 Item Paling Boros Bulan Ini</div>
+                            <div class="reminder-desc">${itemName} menghabiskan ${formatRupiah(itemTotal)} (${percentage}% dari total bulanan). Pertimbangkan untuk menguranginya.</div>
+                        </div>
+                    </div>`;
+            }
+
+            // ----- 4. Item paling sering dibeli (frekuensi) -----
+            const itemFreq = {};
+            monthTransactions.forEach(tr => {
+                const item = tr['NAMA ITEM'];
+                itemFreq[item] = (itemFreq[item] || 0) + 1;
+            });
+            const sortedFreq = Object.entries(itemFreq).sort((a,b) => b[1] - a[1]);
+            const topFreq = sortedFreq[0];
+            if (topFreq && topFreq[1] > 1) {
+                const [itemName, freq] = topFreq;
+                container.innerHTML += `
+                    <div class="reminder-card info">
+                        <i class="fas fa-repeat reminder-icon" style="color:#b84a6a;"></i>
+                        <div class="reminder-content">
+                            <div class="reminder-title">🔄 Item Paling Sering Dibeli</div>
+                            <div class="reminder-desc">${itemName} dibeli ${freq} kali bulan ini. Total pengeluaran: ${formatRupiah(itemTotals[itemName])}. Cek apakah perlu.</div>
+                        </div>
+                    </div>`;
+            }
+
+            // ----- 5. Item yang melebihi ambang batas (misal > 30% total) -----
+            const highItems = sortedItems.filter(([_, val]) => val > monthlyExpense * 0.3);
+            highItems.forEach(([itemName, val]) => {
+                if (itemName === topItem[0]) return; // sudah ditampilkan di card terpisah
+                container.innerHTML += `
+                    <div class="reminder-card warning">
+                        <i class="fas fa-exclamation-circle reminder-icon" style="color:#f9b572;"></i>
+                        <div class="reminder-content">
+                            <div class="reminder-title">⚠️ Item Signifikan</div>
+                            <div class="reminder-desc">${itemName} mencapai ${formatRupiah(val)} (>30% total bulanan). Evaluasi kembali kebutuhan.</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // ----- 6. Jika tidak ada transaksi bulan ini -----
+        if (monthTransactions.length === 0) {
+            container.innerHTML += `
+                <div class="reminder-card info">
+                    <i class="fas fa-info-circle reminder-icon" style="color:#5bc0de;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">📭 Belum Ada Transaksi</div>
+                        <div class="reminder-desc">Belum ada pengeluaran tercatat bulan ini. Tetap bijak berbelanja!</div>
+                    </div>
+                </div>`;
+        }
+
+        // ----- 7. Tips berdasarkan sisa budget dan hari (jika memungkinkan) -----
+        if (daysLeft > 0 && remainingBudget > 0 && monthlyExpense <= MONTHLY_LIMIT) {
+            const maxDaily = remainingBudget / daysLeft;
+            container.innerHTML += `
+                <div class="reminder-card success">
+                    <i class="fas fa-lightbulb reminder-icon" style="color:#6fcf97;"></i>
+                    <div class="reminder-content">
+                        <div class="reminder-title">💡 Tips Harian</div>
+                        <div class="reminder-desc">Agar tetap dalam batas, maksimal belanja per hari mulai sekarang: ${formatRupiah(maxDaily)}.</div>
+                    </div>
+                </div>`;
+        }
+    }
+
     // ================= UPDATE DASHBOARD =================
     function updateDashboard() {
-        // Hitung total, bulan berjalan, item terbesar
         let totalExpense = currentData.reduce((acc, r) => acc + r.NILAIout, 0);
         let now = new Date();
         let currentMonthKey = formatMonthKey(now);
         let monthlyExpense = monthlyTransactionsByMonth[currentMonthKey]?.expense || 0;
 
-        // Item terbesar
         let itemsTotal = {};
         currentData.forEach(r => {
             itemsTotal[r['NAMA ITEM']] = (itemsTotal[r['NAMA ITEM']] || 0) + r.NILAIout;
@@ -661,11 +846,9 @@
         document.getElementById('topExpenseItem').innerText = topItem.slice(0,15) + (topItem.length>15?'...':'');
         document.getElementById('topExpenseAmount').innerText = formatRupiah(topAmount);
 
-        // Average daily (30 hari)
         let avgDaily = totalExpense / 30;
         document.getElementById('avgDaily').innerText = formatRupiah(avgDaily);
 
-        // Proyeksi akhir bulan
         let hariInBulan = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
         let hariBerlalu = now.getDate();
         let avgPerHari = monthlyExpense / hariBerlalu || 0;
@@ -677,44 +860,23 @@
         let persen = (monthlyExpense / MONTHLY_LIMIT * 100).toFixed(1);
         document.getElementById('percentBudget').innerText = persen + '%';
 
-        // Reminder cerdas
-        showReminders(monthlyExpense, sisa, persen);
+        // Panggil reminder yang sudah diperbanyak
+        const monthTransactions = monthlyTransactionsByMonth[currentMonthKey]?.transactions || [];
+        renderAllReminders(monthlyExpense, sisa, persen, monthTransactions);
 
-        // Update chart
         updateCharts();
-        // Update tabel transaksi
         renderTable(currentData);
-        // Update item lists
         updateItemLists(itemsTotal);
-        // Update annual
         updateAnnual();
-        // Update monthly categories
         renderMonthlyCategories();
 
-        // Update daily view if visible
         if (!document.getElementById('dailyTab').classList.contains('hidden')) updateDailyView();
         if (!document.getElementById('monthlyTab').classList.contains('hidden')) updateMonthlyView();
-    }
-
-    function showReminders(monthly, sisa, persen) {
-        let container = document.getElementById('reminderContainer');
-        container.innerHTML = '';
-        let monthName = new Date().toLocaleString('id', { month: 'long' });
-        if (monthly > MONTHLY_LIMIT) {
-            container.innerHTML += `<div class="reminder-card danger"><i class="fas fa-exclamation-triangle reminder-icon" style="color:#e15554;"></i><div class="reminder-content"><div class="reminder-title">⚠️ Darurat! Melebihi batas</div><div class="reminder-desc">Pengeluaran bulan ${monthName} sudah ${formatRupiah(monthly)}. Batas Rp5.000.000 dilewati sebesar ${formatRupiah(monthly-MONTHLY_LIMIT)}.</div></div></div>`;
-        } else if (monthly > MONTHLY_LIMIT * 0.9) {
-            container.innerHTML += `<div class="reminder-card warning"><i class="fas fa-clock reminder-icon" style="color:#f9b572;"></i><div class="reminder-content"><div class="reminder-title">⚠️ Mendekati batas</div><div class="reminder-desc">Sudah ${persen}% dari limit. Sisa ${formatRupiah(sisa)}. Kendalikan belanja!</div></div></div>`;
-        } else if (monthly > MONTHLY_LIMIT * 0.75) {
-            container.innerHTML += `<div class="reminder-card"><i class="fas fa-info-circle reminder-icon" style="color:#d16b8c;"></i><div class="reminder-content"><div class="reminder-title">💡 Pengingat</div><div class="reminder-desc">Sisa budget bulan ini ${formatRupiah(sisa)}. Masih aman, tapi tetap waspada.</div></div></div>`;
-        } else {
-            container.innerHTML += `<div class="reminder-card success"><i class="fas fa-smile reminder-icon" style="color:#6fcf97;"></i><div class="reminder-content"><div class="reminder-title">✅ Keuangan sehat</div><div class="reminder-desc">Bulan ${monthName} baru terpakai ${persen}% dari limit. Sisa ${formatRupiah(sisa)}. Good job!</div></div></div>`;
-        }
     }
 
     // ================= CHART =================
     let chartInst = {};
     function updateCharts() {
-        // monthly trend (urutkan bulan)
         let months = Object.keys(monthlyTransactionsByMonth).sort();
         let values = months.map(m => monthlyTransactionsByMonth[m].expense);
         if (chartInst.monthly) chartInst.monthly.destroy();
@@ -727,7 +889,6 @@
             });
         }
 
-        // category chart (top 7)
         let catMap = {};
         currentData.forEach(r => { catMap[r['NAMA ITEM']] = (catMap[r['NAMA ITEM']] || 0) + r.NILAIout; });
         let sortedCat = Object.entries(catMap).sort((a,b) => b[1]-a[1]).slice(0,7);
@@ -742,14 +903,12 @@
                 }
             });
         }
-        // category breakdown list
         let catHtml = '';
         sortedCat.forEach(([name, val]) => {
             catHtml += `<div class="item-row"><span class="item-name">${name}</span><span class="item-amount">${formatRupiah(val)}</span></div>`;
         });
         document.getElementById('categoryBreakdown').innerHTML = catHtml;
 
-        // trend chart (bar)
         if (chartInst.trend) chartInst.trend.destroy();
         let ctx3 = document.getElementById('incomeExpenseTrendChart')?.getContext('2d');
         if (ctx3) {
@@ -768,7 +927,6 @@
         });
         document.getElementById('topExpenseItems').innerHTML = htmlTotal || '<div class="item-row">Tidak ada data</div>';
 
-        // Frekuensi
         let freq = {};
         currentData.forEach(r => freq[r['NAMA ITEM']] = (freq[r['NAMA ITEM']] || 0) + 1);
         let sortedFreq = Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0,10);
@@ -936,7 +1094,6 @@
         document.getElementById('currentMonthlyDateDisplay').innerText = formatDisplayMonth(currentMonthlyDate);
         document.getElementById('monthlyViewExpense').innerText = formatRupiah(data.expense);
         document.getElementById('monthlyTransactionCount').innerText = data.transactions.length;
-        // Tampilkan kategori
         renderMonthlyCategoriesForMonth(key);
         updateMonthlyCalendar();
     }
@@ -988,7 +1145,6 @@
             let resp = await fetch(SHEET_URL);
             let csv = await resp.text();
             currentData = parseCSV(csv);
-            // urutkan descending by date (gunakan _dateObj)
             currentData.sort((a,b) => {
                 let da = a._dateObj || new Date(0);
                 let db = b._dateObj || new Date(0);
@@ -1000,7 +1156,6 @@
             updateDashboard();
             document.getElementById('lastUpdate').innerText = new Date().toLocaleString('id-ID');
 
-            // populate month filter (ambil dari kolom BULAN)
             let months = [...new Set(currentData.map(r => r.BULAN).filter(Boolean))];
             let select = document.getElementById('monthFilter');
             select.innerHTML = '<option value="all">Semua Bulan</option>';
